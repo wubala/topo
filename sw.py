@@ -7,7 +7,12 @@ Based in part on examples in the [Introduction to Mininet] page on the Mininet's
 project wiki.
 
 [Introduction to Mininet]: https://github.com/mininet/mininet/wiki/Introduction-to-Mininet#apilevels
-
+mn --custom sw.py --topo sw
+python sw.py
+为了测试ovs NXM 
+ovs-ofctl add-flow s1 "table=0,in_port=1,priority=33,dl_dst=01:00:00:00:00:00/01:00:00:00:00:00,actions=flood,resubmit(,3)"
+ovs-ofctl add-flow s1 "table=0,in_port=2,priority=33,dl_dst=01:00:00:00:00:00/01:00:00:00:00:00,actions=flood,resubmit(,3)"
+ovs-ofctl add-flow s1 "table=3,priority=10, actions=learn(table=0, priority=30, NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],output:NXM_OF_IN_PORT[])"
 """
 
 from mininet.cli import CLI
@@ -28,6 +33,7 @@ class MinimalTopo( Topo  ):
         ha = self.addHost( 'ha'  )
         hb = self.addHost( 'hb'  )
         hc = self.addHost( 'hc' )
+        hd = self.addHost( 'hd' )
 
         # Create a switch
         s1 = self.addSwitch( 's1'  )
@@ -41,6 +47,8 @@ class MinimalTopo( Topo  ):
         self.addLink( s1, ha  )
         self.addLink( s1, hb  )
         self.addLink( s2, hc  )
+        self.addLink( s2, hd )
+    # Actually start the network
 
 def runMinimalTopo():
     "Bootstrap a Mininet network using the Minimal Topology"
@@ -48,24 +56,28 @@ def runMinimalTopo():
     # Create an instance of our topology
     topo = MinimalTopo()
 
+
     # Create a network based on the topology using OVS and controlled by
     # a remote controller.
     net = Mininet(
     topo=topo,
     controller=lambda name: RemoteController( name, ip='127.0.0.1'  ),
+    #controller=None,
     switch=OVSSwitch ,
     autoSetMacs=True 
     )
 
-    # Actually start the network
     net.start()
-    net.get('ha').setIP("10.0.0.9/24")
-    net.get('hb').setIP("10.0.0.9/24")
-    net.get('hc').setIP("10.0.0.9/24")
-    net.get('ha').setMAC("00:00:00:00:00:0a")
-    net.get('hb').setMAC("00:00:00:00:00:0a")
-    net.get('hc').setMAC("00:00:00:00:00:0a")
+    net.get('h1').setIP("1.1.1.1/24")
+    net.get('h2').setIP("1.1.1.2/24")
+    net.get('h3').setIP("1.1.1.3/24")
+    net.get('h4').setIP("1.1.1.4/24")
+    net.get('h1').setMAC("00:00:00:00:00:0a")
+    net.get('h2').setMAC("00:00:00:00:00:0b")
+    net.get('h3').setMAC("00:00:00:00:00:0c")
+    net.get('h4').setMAC("00:00:00:00:00:0d")
 
+    # Actually start the network
     # Drop the user in to a CLI so user can run commands.
     CLI( net  )
 
